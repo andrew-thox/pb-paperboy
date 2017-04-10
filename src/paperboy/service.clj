@@ -1,8 +1,49 @@
 (ns paperboy.service
-  (:require [io.pedestal.http :as http]
+  (:require [clojure.data.json :as json]
+            [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
-            [ring.util.response :as ring-resp]))
+            [ring.util.response :as ring-resp]
+            [io.pedestal.http.content-negotiation :as conneg]
+            [paperboy.database-adapter :as dba]))
+
+(def supported-types ["text/html" "application/edn" "application/json" "text/plain"]) 
+
+(def content-neg-intc (conneg/negotiate-content supported-types))
+
+(defn accepted-type
+  [context]
+  (get-in context [:request :accept :field] "text/plain"))
+
+(defn my-value-writer [key value]
+  (if (or (= key :publish_date) (= key :acquistion_date))
+    (str (java.sql.Date. (.getTime value)))
+    value))
+
+
+(defn transform-content
+  [body content-type]
+  (println content-type)
+  (case content-type
+    "text/html"        (json/write-str body :value-fn my-value-writer)
+    "text/plain"       body
+    "application/edn"  (pr-str body)
+    "application/json" (json/write-str body)))
+
+(defn coerce-to
+  [response content-type]
+  (-> response
+      (update :body transform-content content-type)
+      (assoc-in [:headers "Content-Type"] content-type)))
+
+(def coerce-body
+  {:name ::coerce-body
+   :leave
+   (fn [context]
+     (cond-> context
+       (nil? (get-in context [:response :body :headers "Content-Type"]))
+       (update-in [:response] coerce-to (accepted-type context))))})
+
 
 (defn about-page
   [request]
@@ -12,7 +53,7 @@
 
 (defn home-page
   [request]
-  (ring-resp/response "Hello World!"))
+  {:status 200 :body (dba/all-articles)})
 
 ;; Defines "/" and "/about" routes with their associated :get handlers.
 ;; The interceptors defined after the verb map (e.g., {:get home-page}
@@ -20,7 +61,7 @@
 (def common-interceptors [(body-params/body-params) http/html-body])
 
 ;; Tabular routes
-(def routes #{["/" :get (conj common-interceptors `home-page)]
+(def routes #{["/" :get [coerce-body content-neg-intc home-page] :route-name :greet]
               ["/about" :get (conj common-interceptors `about-page)]})
 
 ;; Map-based routes

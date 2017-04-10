@@ -15,7 +15,15 @@
                  [ch.qos.logback/logback-classic "1.1.8" :exclusions [org.slf4j/slf4j-api]]
                  [org.slf4j/jul-to-slf4j "1.7.22"]
                  [org.slf4j/jcl-over-slf4j "1.7.22"]
-                 [org.slf4j/log4j-over-slf4j "1.7.22"]]
+                 [org.slf4j/log4j-over-slf4j "1.7.22"]
+                 ;; ABOVE THIS LINE ARE THE DEFAULT PEDESTAL DEPENDECIES
+                 [yesql "0.5.3"]
+                 [clojure.jdbc/clojure.jdbc-c3p0 "0.3.1"]
+                 [environ "0.5.0"]
+                 [org.postgresql/postgresql "9.4-1201-jdbc41"]
+                 [org.clojure/data.json "0.2.6"]
+                 ]
+  :plugins [[lein-gorilla "0.4.0"]]
   :min-lein-version "2.0.0"
   :resource-paths ["config", "resources"]
   ;; If you use HTTP/2 or ALPN, use the java-agent to pull in the correct alpn-boot dependency

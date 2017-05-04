@@ -1,5 +1,5 @@
 {:dev
   {:env
-    {:database-uri "postgresql://postgres@192.168.99.100:5432/postgres"
+    {:aws-elastic-url "https://search-journalist-avq7ujejbzhk4uw6amsibfid5u.eu-central-1.es.amazonaws.com"
 }}}
 
